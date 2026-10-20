@@ -1,0 +1,10 @@
+node_modules/
+dist/
+downloads/
+previews/
+designs/
+__pycache__/
+Subtitle Workbench.html
+scripts/import-design.py
+.DS_Store
+*.log

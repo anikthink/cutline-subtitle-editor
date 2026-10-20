@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Cutline browser checks</title>
+<style>body{margin:0;background:#101713;color:#edf0e8;font:14px system-ui}pre{padding:16px}iframe{display:block;width:1280px;height:950px;border:0}</style>
+<pre id="results">Running browser checks…</pre><iframe id="app" title="Cutline test app"></iframe>
+<script type="module">
+import { runWorkflows } from './browser-workflows.mjs';
+window.browserChecks = runWorkflows(document.querySelector('iframe')).then(results => {
+  document.querySelector('pre').textContent = JSON.stringify(results, null, 2); return results;
+}).catch(error => { document.querySelector('pre').textContent = error.stack; throw error; });
+</script></html>

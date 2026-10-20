@@ -1,0 +1,13 @@
+{
+  "name": "cutline-subtitle-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A local-first subtitle editor with a standalone HTML build.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/serve.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

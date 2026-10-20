@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cutline — Subtitle Editor</title>
+<meta name="description" content="Edit and retime SRT subtitles locally. Autosave, project backups, media preview, and a standalone HTML download.">
+<meta name="color-scheme" content="dark">
+
+<link rel="stylesheet" href="./assets/styles.css"></head>
+<body>
+  <div class="app" id="app">
+    <header class="masthead">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div><h1>Cutline</h1><p>Subtitle editor</p></div>
+      </div>
+      <span class="file-name" id="fileName">No subtitle loaded</span><div class="actions"><details class="project-menu" id="projectMenu"><summary class="btn">Project</summary><div class="project-menu-items">
+<button type="button" id="manageProjects">New / recent projects</button>
+<button type="button" id="openBackup">Open project backup</button>
+<button type="button" id="saveBackup">Save project backup</button>
+<a href="./downloads/Cutline.html" download="Cutline.html">Download standalone app</a>
+</div></details><button class="btn" id="openMedia">Open media</button><button class="btn" id="openSrt">Open subtitles</button><button class="btn primary" id="exportBtn">Export SRT</button></div>
+      <input type="file" id="mediaInput" accept="audio/*,video/*" hidden>
+      <input type="file" id="srtInput" accept=".srt,text/plain" hidden>
+      <input type="file" id="backupInput" accept=".json,application/json" hidden>
+<input type="file" id="referenceInput" accept=".srt,text/plain" hidden>
+    </header>
+
+    <div class="statusbar">
+      <span class="position">Position <strong id="statusPosition">00:00:00.000</strong></span>
+      <span>Cues <strong id="statusCues">0</strong></span>
+      <span>Selected <strong id="statusSelected">0</strong></span>
+      <span class="issues">Issues <strong id="statusIssues">0</strong></span>
+      <span>Reviewed <strong id="statusReviewed">0%</strong></span>
+      <span class="saved" id="saveState" role="status">Loading…</span>
+    </div>
+
+    <div id="notice" class="notice" role="status" hidden><span id="noticeText"></span><button type="button" id="dismissNotice">Dismiss</button></div>
+<main class="workspace">
+      <section class="pane stage-pane">
+        <div class="stage" id="stage">
+          <video id="media" preload="metadata" playsinline></video>
+          <div class="audio-poster" id="audioPoster"><p>Audio playback</p></div>
+          <div class="empty-state" id="emptyCallout"><strong>Open video or audio</strong>Choose a media file supported by your browser. Your files stay on this device.</div>
+          <div class="subtitle-overlay" id="subtitleOverlay"></div>
+        </div>
+
+        <div class="transport">
+          <div class="transport-row">
+            <button class="btn square" id="prevCue" aria-label="Previous cue" title="Previous cue (J)">‹</button>
+            <button class="btn square primary" id="playBtn" aria-label="Play" title="Play/Pause (Space)">▶</button>
+            <button class="btn square" id="nextCue" aria-label="Next cue" title="Next cue (K)">›</button>
+            <button class="btn small" id="replayBtn" title="Replay selected cue (Enter)">Replay cue</button>
+            <span class="timecode"><span id="currentTime">00:00:00.000</span> / <span id="duration">00:00:00.000</span></span>
+            <span class="transport-spacer"></span>
+            <label>Speed <select class="rate" id="rate"><option>.5×</option><option>.75×</option><option selected>1×</option><option>1.25×</option><option>1.5×</option><option>2×</option></select></label>
+          </div>
+          <input class="scrub" id="scrub" type="range" min="0" max="1000" value="0" aria-label="Media position">
+        </div>
+
+        <div class="wave-wrap">
+          <div class="wave-head"><span>Waveform · drag handles to adjust timing</span><span id="waveWindow">± 8 seconds</span></div>
+          <div class="wave-context"><span id="prevWaveCue">Previous —</span><span id="activeWaveCue">Active —</span><span id="nextWaveCue">Next —</span></div>
+          <canvas class="wave" id="wave" width="900" height="105"></canvas>
+        </div>
+      </section>
+
+      <section class="pane list-pane">
+        <div class="list-tools">
+          <input class="search" id="search" aria-label="Search subtitles" placeholder="Search dialogue or cue number…">
+          <select class="filter" id="filter" aria-label="Filter subtitles"><option value="all">All cues</option><option value="issues">Issues</option><option value="unreviewed">Unreviewed</option><option value="reviewed">Reviewed</option></select>
+          <button class="btn square" id="followBtn" title="Follow playback">Follow</button>
+          <div class="selection-strip"><span id="selectionStatus"><strong>0 selected</strong></span>
+<span class="selection-actions"><button class="btn ghost" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button><button class="btn ghost" id="redoBtn" title="Redo (Ctrl+Y)">Redo</button><button class="mini-link add" id="addCueBtn">Add cue</button><button class="btn" id="shiftBtn">Bulk shift</button>
+<details class="selection-menu"><summary>Selection</summary><div class="selection-menu-items"><button class="mini-link" id="selectAllBtn">Select all</button><button class="mini-link" id="clearSelectionBtn">Keep active only</button><button class="mini-link danger" id="deleteCueBtn">Delete selected</button></div></details></span></div>
+        </div>
+        <div class="cue-list" id="cueList" role="listbox" aria-label="Subtitles" aria-multiselectable="true"></div>
+      </section>
+
+      <aside class="pane inspector open" id="inspector">
+        <section class="inspector-section">
+          <h2 class="section-title">Active cue</h2>
+          <div class="cue-title"><strong id="activeNumber">—</strong><span id="activeRange">No cue selected</span></div>
+          <div class="time-grid">
+            <label>In <input class="field" id="startField" placeholder="00:00:00.000"></label>
+            <label>Out <input class="field" id="endField" placeholder="00:00:00.000"></label>
+          </div>
+          <p id="timingError" class="field-error" role="alert" hidden></p><div class="button-grid">
+            <button class="btn small wide" id="seekCue">Seek to cue</button>
+            <button class="btn small" id="setStart">[ Set in to playhead</button>
+            <button class="btn small" id="setEnd">] Set out to playhead</button>
+            <button class="btn small" id="nudgeBack">−100 ms</button>
+            <button class="btn small" id="nudgeForward">+100 ms</button>
+          </div>
+        </section>
+
+        <section class="inspector-section">
+          <h2 class="section-title" id="subtitle-text-label">Subtitle text</h2>
+          <textarea id="textField" aria-labelledby="subtitle-text-label" spellcheck="true" placeholder="Subtitle text"></textarea>
+          <div class="button-grid">
+            <button class="btn small" id="cleanupText">Clean text</button>
+            <button class="btn small" id="reviewBtn">Mark reviewed</button>
+          </div>
+          <div class="metrics">
+            <div class="metric" id="durationMetric"><b>—</b><span>duration</span></div>
+            <div class="metric" id="cpsMetric"><b>—</b><span>chars/sec</span></div>
+            <div class="metric" id="lineMetric"><b>—</b><span>chars/line</span></div>
+          </div>
+        </section>
+
+        <section class="inspector-section">
+          <div class="section-heading"><h2 class="section-title">Reference subtitles</h2><button class="btn ghost" id="openReference">Load reference</button></div>
+          <textarea class="reference" id="referenceText" aria-label="Reference subtitle text" readonly placeholder="Load a reference SRT to match the current row order"></textarea>
+        </section>
+
+        <section class="inspector-section">
+          <h2 class="section-title">Quality control</h2>
+          <div class="issues-list" id="issuesList"><div class="issue-chip ok">Load subtitles to begin validation.</div></div>
+          <div class="button-grid">
+            <button class="btn small" id="fixOverlap">Fix overlap</button>
+            <button class="btn small" id="jumpIssue">Next issue</button>
+          </div>
+        </section>
+
+        <details class="inspector-section shortcut-section"><summary>Keyboard shortcuts</summary>
+          <div class="shortcut-grid">
+            <kbd>Space</kbd><span>Play / pause</span>
+            <kbd>J / K</kbd><span>Previous / next cue</span>
+            <kbd>[ / ]</kbd><span>Set cue in / out</span>
+            <kbd>← / →</kbd><span>Seek 500 ms</span>
+            <kbd>Shift + ← / →</kbd><span>Nudge selected cues 100 ms</span>
+            <kbd>Shift-click</kbd><span>Select a cue range</span>
+            <kbd>Ctrl-click</kbd><span>Add or remove a cue</span>
+            <kbd>Ctrl + A</kbd><span>Select all cues</span>
+            <kbd>Insert</kbd><span>Add cue at playhead</span>
+            <kbd>Delete</kbd><span>Delete selected cues</span>
+            <kbd>Enter</kbd><span>Replay selected cue</span>
+            <kbd>Ctrl + Z</kbd><span>Undo</span>
+            <kbd>Ctrl + Y</kbd><span>Redo</span>
+            <kbd>Ctrl + S</kbd><span>Download project backup</span>
+          </div>
+        </details>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="shiftDialog">
+    <form method="dialog" class="dialog-body" id="shiftForm">
+      <h2>Shift timing</h2>
+      <p>Apply an offset without rewriting dialogue. Positive values move subtitles later.</p>
+      <label>Offset in milliseconds <input class="field" id="shiftAmount" type="number" value="0" step="100"></label>
+      <label style="margin-top:12px">Scope
+        <select class="field" id="shiftScope"><option value="selected">Selected cues</option><option value="forward">Active cue onward</option><option value="all">All cues</option></select>
+      </label>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">Cancel</button><button class="btn primary" id="applyShift" value="default">Apply shift</button></div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+
+<dialog id="projectDialog" aria-labelledby="projectDialogTitle"><div class="dialog-body">
+<h2 id="projectDialogTitle">Projects</h2><p>Projects save in this browser. Use backups to move your work to another browser or device.</p>
+<label for="projectTitle">Project name</label><input class="field" id="projectTitle" maxlength="200" autocomplete="off" value="Untitled project">
+<div class="dialog-actions"><button class="btn" type="button" id="renameProject">Rename current</button><button class="btn primary" type="button" id="newProject">New project</button></div>
+<h3>Recent projects</h3><div class="project-list" id="recentProjects"></div>
+<div class="dialog-actions"><button class="btn" type="button" id="closeProjects">Close</button></div>
+</div></dialog>
+<dialog id="importDialog" aria-labelledby="importTitle"><div class="dialog-body">
+<h2 id="importTitle">Import report</h2><p id="importSummary" class="report-summary"></p><ul id="importDetails" class="report-list"></ul>
+<p>Your current project stays available in Recent projects.</p>
+<div class="dialog-actions"><button class="btn" type="button" id="cancelImport">Cancel</button><button class="btn primary" type="button" id="confirmImport">Import valid cues</button></div>
+</div></dialog>
+
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>
