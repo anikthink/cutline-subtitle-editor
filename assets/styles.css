@@ -17,8 +17,7 @@ button,input,select,textarea{border-radius:3px}
 .app{height:auto}
 .masthead{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);background:#0c100d}
 .brand{display:flex;align-items:center;gap:12px;flex-shrink:0}
-.brand-mark{width:27px;height:27px;border:1px solid var(--signal);transform:rotate(45deg);position:relative;margin:4px}
-.brand-mark::after{content:"";position:absolute;inset:8px;background:var(--signal)}
+.brand-mark{display:block;width:40px;height:40px;flex-shrink:0}
 .brand h1{margin:0;font:700 20px/1.1 Georgia,serif;letter-spacing:.02em}
 .brand p{margin:3px 0 0;font-size:12px;color:var(--muted)}
 .file-name{min-width:0;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--muted)}

@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="branding/cutline-open-seam/cutline-mark-white.svg">
+  <img src="branding/cutline-open-seam/cutline-mark-dark.svg" alt="Cutline Open seam logo" width="80" height="80">
+</picture>
+
 # Cutline
 
 A subtitle editor built with plain HTML, CSS, and JavaScript. Open local media, edit SRT subtitles, check timing and readability, and export your work. The interface follows the approved deep-clean design.
@@ -53,6 +58,10 @@ The build writes:
 - `downloads/Cutline.html` — the self-contained offline app, also copied into the website.
 
 The production source is `index.html`, `assets/styles.css`, and the modules in `src/`. `scripts/build.mjs` combines the same source into the standalone HTML. Both versions share the same editing and storage code.
+
+## Logo
+
+Cutline uses the **Open seam** mark: two equal subtitle bars divided by a centred diagonal cut. The [logo assets and usage notes](branding/cutline-open-seam/) include amber, dark, and white SVGs, transparent PNGs, and a `currentColor` SVG for inline use. The app header uses the amber master; the favicon places it on a dark background. The standalone build embeds both images for offline use.
 
 ## Checks and deployment
 
